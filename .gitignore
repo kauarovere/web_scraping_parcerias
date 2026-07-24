@@ -1,0 +1,50 @@
+# ===========================================================
+# .gitignore — Observatório de Parcerias SP
+# ===========================================================
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+
+# --- Dados gerados (não devem ir ao repositório) ---
+data/*.xlsx
+data/*.xls
+data/*.json
+data/*.log
+data/*.txt
+data/*.docx
+
+# --- Checkpoints e backups ---
+*checkpoint*.json
+Backup_Temp*.xlsx
+
+# --- Planilhas de saída ---
+Auditoria_*.xlsx
+Teste_Robo.xlsx
+Lote_*.xlsx
+Amostra_*.xlsx
+
+# --- Ambientes virtuais ---
+.env
+.env.local
+
+# --- IDEs ---
+.vscode/
+.idea/
+*.suo
+*.user
+
+# --- Windows ---
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# --- macOS ---
+.DS_Store

@@ -1,0 +1,3 @@
+# Pasta de dados — arquivos gerados em execução (planilhas, checkpoints, backups)
+# Este arquivo garante que a pasta seja rastreada pelo git.
+# Os arquivos dentro desta pasta estão no .gitignore.
