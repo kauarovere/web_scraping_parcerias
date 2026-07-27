@@ -7,6 +7,7 @@ import pandas as pd
 import time
 import json
 import os
+import datetime
 import tkinter as tk
 from tkinter import messagebox
 
@@ -181,6 +182,8 @@ print("-" * 60)
 print(f"INICIANDO EXTRAÇÃO DE {len(PROCESSOS)} PROCESSOS (BASE COMPLETA)")
 print("-" * 60)
 
+tempo_inicio = time.time()
+
 for i in range(indice_inicio, len(PROCESSOS)):
     processo_bruto = PROCESSOS[i]
     processo_fmt   = formatar_processo(processo_bruto)
@@ -289,7 +292,7 @@ for i in range(indice_inicio, len(PROCESSOS)):
     salvar_checkpoint(caminho_arquivo, i + 1, resultados_excel,
                       processos_com_sucesso, processos_sem_sucesso)
 
-    time.sleep(1)  # Respiro de 1 segundo para o firewall não nos derrubar
+    time.sleep(0.3)  # Pausa reduzida — equilibra velocidade e respeito ao servidor
 
 # ===========================================================
 # 5. GERAÇÃO DO ARQUIVO FINAL
@@ -304,10 +307,15 @@ df_resultados.to_excel(NOME_SAIDA, index=False)
 apagar_checkpoint()
 
 # --- INSIGHTS FINAIS ---
+tempo_fim       = time.time()
+tempo_total_seg = int(tempo_fim - tempo_inicio)
+tempo_formatado = str(datetime.timedelta(seconds=tempo_total_seg))
+
 print("=" * 60)
 print("📊 INSIGHTS DA EXTRAÇÃO COMPLETA")
 print("=" * 60)
 print(f"-> {processos_com_sucesso} processos foram mapeados com sucesso.")
 print(f"-> {processos_sem_sucesso} processos não foram mapeados com sucesso.")
+print(f"-> ⏱️  Tempo total de execução: {tempo_formatado}")
 print(f"\n✅ Arquivo final salvo como: '{NOME_SAIDA}'")
 print("🗑️  Checkpoint removido. Execução concluída!")
