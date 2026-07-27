@@ -8,7 +8,7 @@ import time
 import json
 import os
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import messagebox
 
 # ===========================================================
 # CONFIGURAÇÕES
@@ -25,12 +25,13 @@ headers = {
     'Content-Type': 'application/x-www-form-urlencoded',
 }
 
-# Caminho do arquivo de checkpoint (salvo na pasta data/ do projeto)
-SCRIPT_DIR   = os.path.dirname(os.path.abspath(__file__))
-PROJETO_DIR  = os.path.dirname(SCRIPT_DIR)
-DATA_DIR     = os.path.join(PROJETO_DIR, "data")
+# Caminhos do projeto
+SCRIPT_DIR      = os.path.dirname(os.path.abspath(__file__))
+PROJETO_DIR     = os.path.dirname(SCRIPT_DIR)
+DATA_DIR        = os.path.join(PROJETO_DIR, "data")
+ARQUIVO_ENTRADA = os.path.join(DATA_DIR, "Raspagem_Parcerias_n1.xlsx")
 CHECKPOINT_PATH = os.path.join(DATA_DIR, "checkpoint_extracao.json")
-NOME_SAIDA   = os.path.join(DATA_DIR, "Auditoria_Completa_Parcerias.xlsx")
+NOME_SAIDA      = os.path.join(DATA_DIR, "Auditoria_Completa_Parcerias.xlsx")
 
 os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -114,42 +115,29 @@ def apagar_checkpoint():
         os.remove(CHECKPOINT_PATH)
 
 # ===========================================================
-# 1. SELEÇÃO DO ARQUIVO COM O MOUSE
+# 1. CARREGAMENTO AUTOMÁTICO DO ARQUIVO DE ENTRADA
 # ===========================================================
 print("Iniciando o robô...")
+print(f"📂 Arquivo de entrada: {ARQUIVO_ENTRADA}")
 
-root = tk.Tk()
-root.withdraw()
-root.attributes('-topmost', True)
-
-print("Por favor, selecione o arquivo CSV ou Excel na janela que acabou de abrir...")
-
-caminho_arquivo = filedialog.askopenfilename(
-    title="Selecione o arquivo com a coluna codProcesso_y",
-    filetypes=[("Arquivos CSV", "*.csv"), ("Planilhas Excel", "*.xlsx"), ("Todos os arquivos", "*.*")]
-)
-
-if not caminho_arquivo:
-    print("❌ Nenhum arquivo selecionado. Encerrando o robô.")
+if not os.path.exists(ARQUIVO_ENTRADA):
+    print(f"❌ Arquivo não encontrado: {ARQUIVO_ENTRADA}")
+    print("Verifique se o arquivo 'Raspagem_Parcerias_n1.xlsx' está na pasta 'data/'.")
     exit()
 
-print(f"Arquivo selecionado com sucesso!")
+caminho_arquivo = ARQUIVO_ENTRADA
 
 # ===========================================================
 # 2. LEITURA DO ARQUIVO DE ENTRADA
 # ===========================================================
 try:
-    if caminho_arquivo.lower().endswith(('.xlsx', '.xls')):
-        df_entrada = pd.read_excel(caminho_arquivo)
-    else:
-        df_entrada = pd.read_csv(caminho_arquivo, sep=None, engine='python', encoding='latin-1')
-
-    PROCESSOS = df_entrada['codProcesso_y'].dropna().astype(str).tolist()
+    df_entrada = pd.read_excel(caminho_arquivo)
+    PROCESSOS  = df_entrada['codProcesso_y'].dropna().astype(str).tolist()
     print(f"✅ {len(PROCESSOS)} processos carregados com sucesso! Preparando motores...\n")
 
 except Exception as e:
-    print(f"❌ Erro ao ler o arquivo selecionado: {e}")
-    print("Dica: Se a coluna tiver outro nome na planilha atual, o script não vai encontrá-la.")
+    print(f"❌ Erro ao ler o arquivo: {e}")
+    print("Dica: Verifique se a coluna 'codProcesso_y' existe na planilha.")
     exit()
 
 # ===========================================================
