@@ -146,6 +146,11 @@ except Exception as e:
 # ===========================================================
 checkpoint = carregar_checkpoint()
 
+# Inicializa tkinter (necessário para o messagebox do checkpoint)
+root = tk.Tk()
+root.withdraw()
+root.attributes('-topmost', True)
+
 resultados_excel       = []
 processos_com_sucesso  = 0
 processos_sem_sucesso  = 0
@@ -158,7 +163,6 @@ if checkpoint and checkpoint.get("arquivo_entrada") == caminho_arquivo:
         f"Foi encontrado um checkpoint com {ja_feitos} processos já concluídos.\n\n"
         f"Deseja CONTINUAR de onde parou?\n\n"
         f"Clique 'Não' para começar do zero (o checkpoint será apagado).",
-        parent=root
     )
     if resposta:
         resultados_excel      = checkpoint.get("resultados", [])
