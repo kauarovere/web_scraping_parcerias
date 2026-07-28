@@ -20,6 +20,7 @@ TIPOS_DOCUMENTO = [
 ]
 
 url_busca = 'https://diariooficial.prefeitura.sp.gov.br/md_epubli_controlador.php?acao=materias_pesquisar'
+url_busca_negocios = 'https://diariooficial.prefeitura.sp.gov.br/md_epubli_controlador.php?acao=negocios_pesquisar'
 
 headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/148.0.0.0 Safari/537.36',
@@ -259,7 +260,7 @@ for i in range(indice_inicio, len(PROCESSOS)):
                             break
 
         if documento_sucesso_link:
-            print("✅ OK")
+            print("✅ OK (Matérias)")
             processos_com_sucesso += 1
             resultados_excel.append({
                 "Nº do Processo":   processo_fmt,
@@ -270,16 +271,64 @@ for i in range(indice_inicio, len(PROCESSOS)):
                 "Link do Documento": documento_sucesso_link
             })
         else:
-            print("⚠️ Sem dados")
-            processos_sem_sucesso += 1
-            resultados_excel.append({
-                "Nº do Processo":   processo_fmt,
-                "Modalidade":       "-",
-                "Data Início":      "-",
-                "Data Fim":         "-",
-                "Status":           "Não mapeado (Rótulos ausentes)",
-                "Link do Documento": "-"
-            })
+            # FALLBACK PARA BUSCA DE NEGÓCIOS
+            payload_negocios = {
+                'hdnObjeto': processo_fmt,
+                'hdnInicio': '0',
+                'hdnModoPesquisa': 'DATA'
+            }
+            try:
+                res_neg = requests.post(url_busca_negocios, headers=headers, data=payload_negocios, timeout=30)
+                if res_neg.status_code == 200:
+                    soup_neg = BeautifulSoup(res_neg.text, 'html.parser')
+                    for tag_a in soup_neg.find_all('a', href=True):
+                        href = tag_a['href']
+                        if 'md_epubli_visualizar' in href:
+                            if not href.startswith('http'):
+                                href = "https://diariooficial.prefeitura.sp.gov.br/" + href
+                            
+                            container = tag_a.find_parent(['div', 'p', 'tr', 'li'])
+                            texto_contexto = container.text.lower() if container else tag_a.parent.text.lower()
+                            
+                            if any(tipo in texto_contexto for tipo in TIPOS_DOCUMENTO):
+                                try:
+                                    resp_doc = requests.get(href, headers=headers, timeout=30)
+                                    if 'iso-8859-1' in resp_doc.text.lower():
+                                        resp_doc.encoding = 'iso-8859-1'
+                                    mod, d_ini, d_fim = extrair_informacoes_hibrido(resp_doc.text)
+                                    if d_ini != "Não identificada" or d_fim != "Não identificada":
+                                        documento_sucesso_link = href
+                                        mod_final = mod
+                                        dt_ini_final = d_ini
+                                        dt_fim_final = d_fim
+                                        break
+                                except requests.exceptions.RequestException:
+                                    continue
+            except requests.exceptions.RequestException:
+                pass # falha na rede na segunda tentativa, segue para o sem dados
+
+            if documento_sucesso_link:
+                print("✅ OK (Negócios)")
+                processos_com_sucesso += 1
+                resultados_excel.append({
+                    "Nº do Processo":   processo_fmt,
+                    "Modalidade":       mod_final,
+                    "Data Início":      dt_ini_final,
+                    "Data Fim":         dt_fim_final,
+                    "Status":           "Mapeado (Busca Negócios)",
+                    "Link do Documento": documento_sucesso_link
+                })
+            else:
+                print("⚠️ Sem dados (Matérias e Negócios)")
+                processos_sem_sucesso += 1
+                resultados_excel.append({
+                    "Nº do Processo":   processo_fmt,
+                    "Modalidade":       "-",
+                    "Data Início":      "-",
+                    "Data Fim":         "-",
+                    "Status":           "Não mapeado (Rótulos ausentes)",
+                    "Link do Documento": "-"
+                })
     else:
         print("❌ Erro HTTP")
         processos_sem_sucesso += 1
